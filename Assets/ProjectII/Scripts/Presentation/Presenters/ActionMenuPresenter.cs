@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using ProjectII.Gameplay.Application;
-using ProjectII.Gameplay.Data;
+using KahaGameCore.Package.GameFlowSystem;
 using ProjectII.Gameplay.Presentation.Views;
 
 namespace ProjectII.Gameplay.Presentation.Presenters
@@ -11,22 +10,22 @@ namespace ProjectII.Gameplay.Presentation.Presenters
     public class ActionMenuPresenter : IActionMenuPresenter
     {
         private readonly ActionMenuView view;
-        private UniTaskCompletionSource<PlayerActionData> pendingSelection;
+        private UniTaskCompletionSource<IGameFlowAction> pendingSelection;
 
         public ActionMenuPresenter(ActionMenuView view)
         {
             this.view = view ? view : throw new ArgumentNullException(nameof(view));
         }
 
-        public async UniTask<PlayerActionData> SelectActionAsync(IReadOnlyList<ActionMenuEntry> entries)
+        public async UniTask<IGameFlowAction> SelectActionAsync(IReadOnlyList<ActionMenuEntry> entries)
         {
             CancelPending();
-            pendingSelection = new UniTaskCompletionSource<PlayerActionData>();
+            pendingSelection = new UniTaskCompletionSource<IGameFlowAction>();
 
             view.Bind(entries, entry => pendingSelection.TrySetResult(entry.Action));
             await view.Show(CancellationToken.None);
 
-            PlayerActionData selected = await pendingSelection.Task;
+            IGameFlowAction selected = await pendingSelection.Task;
 
             await view.Hide(CancellationToken.None);
             return selected;

@@ -1,3 +1,4 @@
+using KahaGameCore.Package.GameFlowSystem;
 using ProjectII.Gameplay.Data;
 
 namespace ProjectII.Gameplay.Domain
@@ -5,16 +6,14 @@ namespace ProjectII.Gameplay.Domain
     /// <summary>
     /// 時間流動服務。階段順序與換日規則完全由 TimePhaseData 表定義。
     /// 異動時發佈 TimePhaseChangedEvent，並同步寫入 $CurrentPhase / $Day 供條件式引用。
+    /// ResetToFirstPhase / AdvanceTime 繼承自 IGameFlowTimeService。
     /// </summary>
-    public interface ITimeService
+    public interface ITimeService : IGameFlowTimeService
     {
-        TimePhaseData CurrentPhase { get; }
+        /// <summary>以具體表格型別覆蓋 IGameFlowTimeService.CurrentPhase，供 HUD 等取得完整欄位。</summary>
+        new TimePhaseData CurrentPhase { get; }
         int CurrentDay { get; }
 
-        /// <summary>重設到表中第一個階段、第一天（開新遊戲）。</summary>
-        void ResetToFirstPhase();
-        /// <summary>推進到下一個階段（依 NextID），必要時換日。</summary>
-        void AdvanceTime();
         /// <summary>直接跳到指定階段（依 Key），不換日。</summary>
         void SetPhase(string phaseKey);
     }

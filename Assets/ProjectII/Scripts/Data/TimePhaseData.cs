@@ -1,4 +1,5 @@
 using KahaGameCore.GameData;
+using KahaGameCore.Package.GameFlowSystem;
 
 namespace ProjectII.Gameplay.Data
 {
@@ -6,7 +7,7 @@ namespace ProjectII.Gameplay.Data
     /// 時間階段表（Google Sheet: TimePhaseData）。
     /// 定義一天內的時間流動順序，流程不寫死、完全由本表驅動。
     /// </summary>
-    public class TimePhaseData : IGameData
+    public class TimePhaseData : IGameData, IGameFlowTimePhase
     {
         public int ID { get; private set; }
         /// <summary>程式內部識別字（如 Morning），事件表 Timing 欄位以 PhaseStart:{Key} 引用。</summary>
@@ -21,5 +22,7 @@ namespace ProjectII.Gameplay.Data
         public int AllowAction { get; private set; }
         /// <summary>備註欄，僅供企劃閱讀。</summary>
         public string Note { get; private set; }
+
+        bool IGameFlowTimePhase.AllowAction => AllowAction == 1;
     }
 }

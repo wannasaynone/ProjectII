@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KahaGameCore.GameData.Implemented;
+using KahaGameCore.Package.GameFlowSystem;
 using ProjectII.Gameplay.Data;
 
 namespace ProjectII.Gameplay.Domain
 {
     /// <summary>提供目前地點與條件下可顯示的玩家行動清單。</summary>
-    public interface IPlayerActionProvider
+    public interface IPlayerActionProvider : IGameFlowActionProvider
     {
-        IReadOnlyList<PlayerActionData> GetVisibleActions(int locationId);
+        /// <summary>以具體表格型別覆蓋 IGameFlowActionProvider 的版本，供專案內部取得完整欄位。</summary>
+        new IReadOnlyList<PlayerActionData> GetVisibleActions(int locationId);
         bool IsEnabled(PlayerActionData action);
     }
 
@@ -39,6 +41,16 @@ namespace ProjectII.Gameplay.Domain
         public bool IsEnabled(PlayerActionData action)
         {
             return conditionEvaluator.Evaluate(action.EnableCondition);
+        }
+
+        IReadOnlyList<IGameFlowAction> IGameFlowActionProvider.GetVisibleActions(int locationId)
+        {
+            return GetVisibleActions(locationId);
+        }
+
+        bool IGameFlowActionProvider.IsEnabled(IGameFlowAction action)
+        {
+            return IsEnabled((PlayerActionData)action);
         }
 
         private static bool IsAvailableAtLocation(PlayerActionData action, int locationId)

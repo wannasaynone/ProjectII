@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using KahaGameCore.GameData.Implemented;
 using KahaGameCore.GameEvent;
+using KahaGameCore.Package.GameFlowSystem;
 using ProjectII.Gameplay.Data;
 using ProjectII.Gameplay.Domain.Events;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace ProjectII.Gameplay.Domain
     {
         public TimePhaseData CurrentPhase { get; private set; }
         public int CurrentDay => gameState.Get(GameValueTags.Day);
+
+        IGameFlowTimePhase IGameFlowTimeService.CurrentPhase => CurrentPhase;
 
         private readonly IGameState gameState;
         private readonly List<TimePhaseData> phases;

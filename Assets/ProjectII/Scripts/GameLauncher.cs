@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using KahaGameCore.GameData.Implemented;
 using KahaGameCore.GameEvent;
 using KahaGameCore.Package.EffectProcessor;
+using KahaGameCore.Package.GameFlowSystem;
 using KahaGameCore.UserInterfaceSystem;
 using ProjectBSR.DialogueSystem;
 using ProjectBSR.DialogueSystem.View;

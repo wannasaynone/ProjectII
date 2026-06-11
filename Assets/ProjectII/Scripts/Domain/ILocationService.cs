@@ -1,14 +1,15 @@
 using System.Collections.Generic;
+using KahaGameCore.Package.GameFlowSystem;
 using ProjectII.Gameplay.Data;
 
 namespace ProjectII.Gameplay.Domain
 {
     /// <summary>
     /// 地點服務。目前地點寫入 $CurrentLocation，解鎖狀態由 $LocationUnlocked_{ID} 旗標控制。
+    /// CurrentLocationID 繼承自 IGameFlowLocationService。
     /// </summary>
-    public interface ILocationService
+    public interface ILocationService : IGameFlowLocationService
     {
-        int CurrentLocationID { get; }
         LocationData CurrentLocation { get; }
 
         void MoveTo(int locationId);

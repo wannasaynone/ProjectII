@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using KahaGameCore.Package.GameFlowSystem;
 using KahaGameCore.UserInterfaceSystem;
-using ProjectII.Gameplay.Application;
 using UnityEngine;
 
 namespace ProjectII.Gameplay.Presentation.Views

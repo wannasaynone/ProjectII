@@ -1,4 +1,5 @@
 using KahaGameCore.GameData;
+using KahaGameCore.Package.GameFlowSystem;
 
 namespace ProjectII.Gameplay.Data
 {
@@ -6,7 +7,7 @@ namespace ProjectII.Gameplay.Data
     /// 玩家行動表（Google Sheet: PlayerActionData）。
     /// 行動清單依目前地點與條件動態產生，新增行動只需加表，不需改程式。
     /// </summary>
-    public class PlayerActionData : IGameData
+    public class PlayerActionData : IGameData, IGameFlowAction
     {
         public int ID { get; private set; }
         /// <summary>按鈕顯示名稱。</summary>

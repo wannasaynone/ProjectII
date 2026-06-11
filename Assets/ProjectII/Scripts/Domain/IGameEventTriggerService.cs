@@ -1,5 +1,4 @@
-using System.Threading;
-using Cysharp.Threading.Tasks;
+using KahaGameCore.Package.GameFlowSystem;
 
 namespace ProjectII.Gameplay.Domain
 {
@@ -8,12 +7,9 @@ namespace ProjectII.Gameplay.Domain
     /// （前演出 → 劇情對話 → 效果指令 → 後演出）。
     /// 表中 Timing 可寫精確時機（如 PhaseStart:Morning），或以保留字 Any
     /// （如 PhaseStart:Any、AfterAction:Any）命中同類別的所有時機。
+    /// RaiseTimingAsync 繼承自 IGameFlowEventTriggerService。
     /// </summary>
-    public interface IGameEventTriggerService
+    public interface IGameEventTriggerService : IGameFlowEventTriggerService
     {
-        /// <param name="cancellationToken">
-        /// 流程中止訊號（如 ReturnToTitle）。取消後不再執行佇列中剩餘的事件。
-        /// </param>
-        UniTask RaiseTimingAsync(string timing, CancellationToken cancellationToken = default);
     }
 }
