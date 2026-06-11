@@ -10,6 +10,7 @@
         "KahaGameCore.Package.EffectProcessor.Data",
         "KahaGameCore.Package.EffectProcessor.Processor",
         "KahaGameCore.Package.GameFlowSystem",
+        "KahaGameCore.Package.GameFlowSystem.DefaultImplements",
         "ProjectBSR.DialogueSystem",
         "UniTask",
         "Unity.TextMeshPro",

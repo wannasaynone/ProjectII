@@ -1,5 +1,5 @@
 using System;
-using ProjectII.Gameplay.Data;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using ProjectII.Gameplay.Application;
-using ProjectII.Gameplay.Data;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
 using ProjectII.Gameplay.Presentation.Views;
 
 namespace ProjectII.Gameplay.Presentation.Presenters

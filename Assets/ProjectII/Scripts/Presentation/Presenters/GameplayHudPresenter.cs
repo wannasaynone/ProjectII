@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using KahaGameCore.GameData.Implemented;
 using KahaGameCore.GameEvent;
-using ProjectII.Gameplay.Data;
-using ProjectII.Gameplay.Domain;
-using ProjectII.Gameplay.Domain.Events;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Events;
 using ProjectII.Gameplay.Presentation.Views;
 
 namespace ProjectII.Gameplay.Presentation.Presenters

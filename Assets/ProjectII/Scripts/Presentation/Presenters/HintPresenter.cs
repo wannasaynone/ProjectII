@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using ProjectII.Gameplay.Application;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements;
 using ProjectII.Gameplay.Presentation.Views;
 
 namespace ProjectII.Gameplay.Presentation.Presenters
