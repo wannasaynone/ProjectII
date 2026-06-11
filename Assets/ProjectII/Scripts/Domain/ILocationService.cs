@@ -1,0 +1,19 @@
+using System.Collections.Generic;
+using ProjectII.Gameplay.Data;
+
+namespace ProjectII.Gameplay.Domain
+{
+    /// <summary>
+    /// 地點服務。目前地點寫入 $CurrentLocation，解鎖狀態由 $LocationUnlocked_{ID} 旗標控制。
+    /// </summary>
+    public interface ILocationService
+    {
+        int CurrentLocationID { get; }
+        LocationData CurrentLocation { get; }
+
+        void MoveTo(int locationId);
+        void Unlock(int locationId);
+        /// <summary>取得可在移動選單顯示的地點（ShowInMenu=1、條件成立、且非目前地點）。</summary>
+        IReadOnlyList<LocationData> GetSelectableLocations();
+    }
+}

@@ -1,0 +1,37 @@
+# unity ignore directory
+Library/
+Temp/
+obj/
+Logs/
+
+
+# unity ignore file
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.userprefs
+*.vscode
+*.DS_Store
+*.meta
+*.slnx
+
+
+# need include the meta of file
+!*.*.meta
+
+
+# project ignore directory
+Library_Android/
+Library_iOS/
+Assets/StreamingAssets/iOS/
+Assets/StreamingAssets/Android/
+Assets/StreamingAssets/Standalone/
+Assets/StreamingAssets/build_info.txt
+Assets/StreamingAssets/build_info
+Assets/StreamingAssets/build_info.txt.meta
+TPS_cache/
+/.vs
+.idea/
+/PCBuild/Test
+/UserSettings/Layouts/*.dwlt

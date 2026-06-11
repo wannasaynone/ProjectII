@@ -1,0 +1,3 @@
+[submodule "Assets/KahaGameCore"]
+	path = Assets/KahaGameCore
+	url = https://github.com/wannasaynone/KahaGameCore.git

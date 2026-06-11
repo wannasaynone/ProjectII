@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "google-sheets": {
+      "command": "uvx",
+      "args": [
+        "mcp-google-sheets@latest",
+        "--include-tools",
+        "get_sheet_data,update_cells,list_spreadsheets,list_sheets"
+      ],
+      "env": {
+        "SERVICE_ACCOUNT_PATH": "C:\\Users\\user\\Documents\\work\\datageter-166917-3ed4de440020.json"
+      }
+    }
+  }
+}

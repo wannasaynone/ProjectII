@@ -1,0 +1,23 @@
+{
+    "name": "ProjectII.Editor",
+    "rootNamespace": "ProjectII.Editor",
+    "references": [
+        "ProjectII.Gameplay",
+        "KahaGameCore.Package.UserInterfaceSystem",
+        "ProjectBSR.DialogueSystem",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
