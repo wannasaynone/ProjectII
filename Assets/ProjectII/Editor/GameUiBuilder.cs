@@ -23,8 +23,6 @@ namespace ProjectII.Editor
 
         /// <summary>設計解析度（CanvasScaler 參考值）。</summary>
         private static readonly Vector2 referenceResolution = new Vector2(3840f, 2160f);
-        /// <summary>KahaGameCore DialogueView prefab 以 1920x1080 設計，需放大至設計解析度。</summary>
-        private static readonly Vector2 dialogueViewDesignResolution = new Vector2(1920f, 1080f);
 
         private static readonly Color panelColor = new Color(0.08f, 0.08f, 0.12f, 0.92f);
         private static readonly Color buttonColor = new Color(0.22f, 0.24f, 0.32f, 1f);
@@ -322,13 +320,15 @@ namespace ProjectII.Editor
             scaler.matchWidthOrHeight = 0.5f;
             canvasObject.AddComponent<GraphicRaycaster>();
 
+            // 繪製順序（由下而上）＝階層順序：UIRoot → DialogueView → OverlayRoot → Blackout。
+            // OverlayRoot 必須在 DialogueView 之後，對話中觸發的提示視窗等覆蓋層才不會被對話蓋住。
             GameObject uiRootObject = CreateUIObject("UIRoot", canvasObject.transform);
             StretchFull(uiRootObject.GetComponent<RectTransform>());
 
+            GameObject dialogueViewInstance = InstantiateDialogueView(canvasObject.transform);
+
             GameObject overlayRootObject = CreateUIObject("OverlayRoot", canvasObject.transform);
             StretchFull(overlayRootObject.GetComponent<RectTransform>());
-
-            GameObject dialogueViewInstance = InstantiateDialogueView(canvasObject.transform);
 
             GameObject blackoutObject = CreateUIObject("BlackoutOverlay", canvasObject.transform);
             StretchFull(blackoutObject.GetComponent<RectTransform>());
@@ -354,8 +354,8 @@ namespace ProjectII.Editor
         }
 
         /// <summary>
-        /// DialogueView prefab 以 1920x1080 設計（KahaGameCore 規格），
-        /// 因此包一層固定 1080p 尺寸、等比放大的容器，使其鋪滿 4K 設計畫布。
+        /// DialogueView 內部元件的錨點設置會自適應畫布大小，
+        /// 直接放到 Canvas 下鋪滿即可，不需要任何縮放包覆層。
         /// </summary>
         private static GameObject InstantiateDialogueView(Transform canvasTransform)
         {
@@ -366,15 +366,8 @@ namespace ProjectII.Editor
                 return null;
             }
 
-            GameObject scaleRoot = CreateUIObject("DialogueScaleRoot", canvasTransform);
-            RectTransform scaleRect = scaleRoot.GetComponent<RectTransform>();
-            scaleRect.anchorMin = scaleRect.anchorMax = new Vector2(0.5f, 0.5f);
-            scaleRect.sizeDelta = dialogueViewDesignResolution;
-            float scaleFactor = referenceResolution.x / dialogueViewDesignResolution.x;
-            scaleRect.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
-
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            instance.transform.SetParent(scaleRoot.transform, false);
+            instance.transform.SetParent(canvasTransform, false);
             RectTransform rectTransform = instance.GetComponent<RectTransform>();
             if (rectTransform != null)
             {
