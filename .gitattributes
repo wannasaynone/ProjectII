@@ -1,1 +1,2 @@
 Assets/Font/** filter=lfs diff=lfs merge=lfs -text
+Assets/ProjectII/Art/Test_CanDelAll/*.png filter=lfs diff=lfs merge=lfs -text

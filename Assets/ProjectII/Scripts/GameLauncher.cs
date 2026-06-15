@@ -98,7 +98,7 @@ namespace ProjectII.Gameplay
             GameplayHudView hudView = await uiController.PushView<GameplayHudView>(GAMEPLAY_HUD_VIEW_PATH);
 
             hudPresenter?.Dispose();
-            hudPresenter = new GameplayHudPresenter(hudView, staticDataManager, services.GameState, services.TimeService);
+            hudPresenter = new GameplayHudPresenter(hudView, staticDataManager, services.GameState, services.TimeService, services.LocationService);
             hudPresenter.Refresh();
 
             flowCts = new CancellationTokenSource();

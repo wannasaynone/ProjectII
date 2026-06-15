@@ -1,6 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__google-sheets__update_cells",
+      "mcp__google-sheets__get_sheet_data"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "google-sheets"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

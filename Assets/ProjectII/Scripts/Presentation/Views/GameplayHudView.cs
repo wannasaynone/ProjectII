@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using KahaGameCore.UserInterfaceSystem;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ProjectII.Gameplay.Presentation.Views
 {
@@ -14,6 +15,10 @@ namespace ProjectII.Gameplay.Presentation.Views
     /// </summary>
     public class GameplayHudView : AView
     {
+        [Tooltip("HUD 後方的常駐背景層，隨地點切換而換圖。")]
+        [SerializeField] private RawImage backgroundImage;
+        [SerializeField] private CanvasGroup backgroundGroup;
+        [SerializeField] private float backgroundFadeDuration = 0.3f;
         [SerializeField] private TextMeshProUGUI dayPhaseText;
         [SerializeField] private RectTransform statContainer;
         [SerializeField] private StatValueItem statItemPrefab;
@@ -24,10 +29,51 @@ namespace ProjectII.Gameplay.Presentation.Views
 
         private readonly Dictionary<string, StatValueItem> tagToStatItem = new Dictionary<string, StatValueItem>();
         private CancellationTokenSource monologueCts;
+        private CancellationTokenSource backgroundCts;
 
         public void SetDayPhase(string text)
         {
             dayPhaseText.text = text;
+        }
+
+        /// <summary>切換 HUD 後方背景：淡出舊圖 → 換貼圖 → 淡入新圖。</summary>
+        public void SetBackground(Texture2D texture)
+        {
+            backgroundCts?.Cancel();
+            backgroundCts?.Dispose();
+            backgroundCts = new CancellationTokenSource();
+            SwapBackgroundAsync(texture, backgroundCts.Token).Forget();
+        }
+
+        private async UniTaskVoid SwapBackgroundAsync(Texture2D texture, CancellationToken token)
+        {
+            if (backgroundImage.texture != null)
+            {
+                await FadeBackgroundAsync(backgroundGroup.alpha, 0f, token);
+            }
+
+            backgroundImage.texture = texture;
+            await FadeBackgroundAsync(0f, 1f, token);
+        }
+
+        private async UniTask FadeBackgroundAsync(float from, float to, CancellationToken token)
+        {
+            if (backgroundFadeDuration <= 0f)
+            {
+                backgroundGroup.alpha = to;
+                return;
+            }
+
+            float timer = 0f;
+            while (timer < backgroundFadeDuration)
+            {
+                token.ThrowIfCancellationRequested();
+                timer += Time.deltaTime;
+                backgroundGroup.alpha = Mathf.Lerp(from, to, timer / backgroundFadeDuration);
+                await UniTask.Yield(token);
+            }
+
+            backgroundGroup.alpha = to;
         }
 
         public void BindStats(IReadOnlyList<(string tag, string displayName, int value)> stats)
@@ -95,6 +141,8 @@ namespace ProjectII.Gameplay.Presentation.Views
         {
             monologueCts?.Cancel();
             monologueCts?.Dispose();
+            backgroundCts?.Cancel();
+            backgroundCts?.Dispose();
         }
     }
 }
