@@ -21,6 +21,7 @@ namespace ProjectII.Gameplay.Presentation.Views
             foreach (ActionMenuEntry entry in entries)
             {
                 ActionButtonItem button = Instantiate(buttonPrefab, buttonContainer);
+                ((RectTransform)button.transform).anchoredPosition = entry.Action.AnchoredPosition;
                 button.Bind(entry, onSelected);
                 spawnedButtons.Add(button);
             }
