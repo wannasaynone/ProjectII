@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
 using KahaGameCore.GameData.Implemented;
 using KahaGameCore.GameEvent;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Events;
-using ProjectBSR.DialogueSystem;
-using ProjectBSR.DialogueSystem.DefaultImplements;
 using ProjectII.Gameplay.Presentation.Views;
 using UnityEngine;
 
@@ -24,11 +21,7 @@ namespace ProjectII.Gameplay.Presentation.Presenters
         private readonly IGameState gameState;
         private readonly ITimeService timeService;
         private readonly ILocationService locationService;
-        private readonly ICGProvider backgroundProvider = new AddressablesCGProvider();
         private readonly List<GameValueData> hudValueDefinitions;
-
-        // 遞增的請求序號：快速連續切換地點時，只有最新一筆載入完成的背景會被套用。
-        private int backgroundRequestId;
 
         public GameplayHudPresenter(
             GameplayHudView view,
@@ -70,7 +63,6 @@ namespace ProjectII.Gameplay.Presentation.Presenters
             EventBus.Unsubscribe<TimePhaseChangedEvent>(OnTimePhaseChanged);
             EventBus.Unsubscribe<MonologueRequestedEvent>(OnMonologueRequested);
             EventBus.Unsubscribe<LocationChangedEvent>(OnLocationChanged);
-            backgroundProvider.ReleaseAll();
         }
 
         private void OnLocationChanged(LocationChangedEvent changedEvent)
@@ -78,27 +70,21 @@ namespace ProjectII.Gameplay.Presentation.Presenters
             ApplyBackground(changedEvent.Location?.Background);
         }
 
-        private void ApplyBackground(string address)
+        private void ApplyBackground(string resourcePath)
         {
-            // 序號自增使尚未完成的舊請求在回來時被丟棄，避免覆蓋較新的背景。
-            int requestId = ++backgroundRequestId;
-            if (string.IsNullOrEmpty(address))
+            if (string.IsNullOrEmpty(resourcePath))
             {
                 return;
             }
 
-            LoadBackgroundAsync(address, requestId).Forget();
-        }
-
-        private async UniTaskVoid LoadBackgroundAsync(string address, int requestId)
-        {
-            Texture2D texture = await backgroundProvider.LoadCGAsync(address);
-            if (requestId != backgroundRequestId || texture == null)
+            GameObject prefab = Resources.Load<GameObject>(resourcePath);
+            if (prefab == null)
             {
+                Debug.LogError($"[GameplayHudPresenter] Failed to load background prefab: {resourcePath}");
                 return;
             }
 
-            view.SetBackground(texture);
+            view.SetBackground(prefab);
         }
 
         private void OnGameValueChanged(GameValueChangedEvent changedEvent)

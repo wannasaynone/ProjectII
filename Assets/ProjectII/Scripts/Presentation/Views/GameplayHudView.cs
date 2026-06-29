@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using KahaGameCore.UserInterfaceSystem;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ProjectII.Gameplay.Presentation.Views
 {
@@ -15,8 +14,8 @@ namespace ProjectII.Gameplay.Presentation.Views
     /// </summary>
     public class GameplayHudView : AView
     {
-        [Tooltip("HUD 後方的常駐背景層，隨地點切換而換圖。")]
-        [SerializeField] private RawImage backgroundImage;
+        [Tooltip("HUD 後方的常駐背景層，隨地點切換而換 prefab。實例化的背景 prefab 會掛在此容器底下。")]
+        [SerializeField] private RectTransform backgroundContainer;
         [SerializeField] private CanvasGroup backgroundGroup;
         [SerializeField] private float backgroundFadeDuration = 0.3f;
         [SerializeField] private TextMeshProUGUI dayPhaseText;
@@ -30,29 +29,40 @@ namespace ProjectII.Gameplay.Presentation.Views
         private readonly Dictionary<string, StatValueItem> tagToStatItem = new Dictionary<string, StatValueItem>();
         private CancellationTokenSource monologueCts;
         private CancellationTokenSource backgroundCts;
+        private GameObject currentBackgroundInstance;
 
         public void SetDayPhase(string text)
         {
             dayPhaseText.text = text;
         }
 
-        /// <summary>切換 HUD 後方背景：淡出舊圖 → 換貼圖 → 淡入新圖。</summary>
-        public void SetBackground(Texture2D texture)
+        /// <summary>切換 HUD 後方背景：淡出舊 prefab → 銷毀並實例化新 prefab → 淡入。</summary>
+        public void SetBackground(GameObject prefab)
         {
             backgroundCts?.Cancel();
             backgroundCts?.Dispose();
             backgroundCts = new CancellationTokenSource();
-            SwapBackgroundAsync(texture, backgroundCts.Token).Forget();
+            SwapBackgroundAsync(prefab, backgroundCts.Token).Forget();
         }
 
-        private async UniTaskVoid SwapBackgroundAsync(Texture2D texture, CancellationToken token)
+        private async UniTaskVoid SwapBackgroundAsync(GameObject prefab, CancellationToken token)
         {
-            if (backgroundImage.texture != null)
+            if (currentBackgroundInstance != null)
             {
                 await FadeBackgroundAsync(backgroundGroup.alpha, 0f, token);
+                Destroy(currentBackgroundInstance);
+                currentBackgroundInstance = null;
             }
 
-            backgroundImage.texture = texture;
+            currentBackgroundInstance = Instantiate(prefab, backgroundContainer);
+            if (currentBackgroundInstance.transform is RectTransform rectTransform)
+            {
+                rectTransform.anchorMin = Vector2.zero;
+                rectTransform.anchorMax = Vector2.one;
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.offsetMax = Vector2.zero;
+            }
+
             await FadeBackgroundAsync(0f, 1f, token);
         }
 
@@ -143,6 +153,11 @@ namespace ProjectII.Gameplay.Presentation.Views
             monologueCts?.Dispose();
             backgroundCts?.Cancel();
             backgroundCts?.Dispose();
+            if (currentBackgroundInstance != null)
+            {
+                Destroy(currentBackgroundInstance);
+                currentBackgroundInstance = null;
+            }
         }
     }
 }
