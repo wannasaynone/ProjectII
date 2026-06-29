@@ -7,3 +7,10 @@ ShaderImporter:
   userData: Version 2.0
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192070
+  packageName: Cartoon VFX Deluxe
+  packageVersion: 3.6.5
+  assetPath: Assets/TextMesh Pro/Shaders/TMPro.cginc
+  uploadId: 647443
