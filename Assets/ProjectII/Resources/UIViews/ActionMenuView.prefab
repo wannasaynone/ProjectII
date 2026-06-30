@@ -101,6 +101,7 @@ MonoBehaviour:
   transitionDuration: 0.15
   buttonContainer: {fileID: 6280848481332267553}
   buttonPrefab: {fileID: 6359489940926326757, guid: 8f8a37f8a708690459f2ae691394ad3a, type: 3}
+  menuGroup: MainAction
 --- !u!1 &6360166666457842582
 GameObject:
   m_ObjectHideFlags: 0

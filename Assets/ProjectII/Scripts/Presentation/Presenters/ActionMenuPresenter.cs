@@ -34,6 +34,8 @@ namespace ProjectII.Gameplay.Presentation.Presenters
         /// <summary>結束遊戲流程時呼叫，讓等待中的選擇以 null 結束以利流程退出。</summary>
         public void CancelPending()
         {
+            // 先拆掉殘留的懸浮子選單，再讓等待中的選擇收斂。
+            view.TearDownSubMenus();
             pendingSelection?.TrySetResult(null);
         }
     }
