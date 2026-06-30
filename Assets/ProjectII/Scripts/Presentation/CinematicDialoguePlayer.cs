@@ -40,6 +40,27 @@ namespace ProjectII.Gameplay.Presentation
             this.dialogueView = dialogueView ? dialogueView : throw new ArgumentNullException(nameof(dialogueView));
         }
 
+        /// <summary>開場以黑幕起手：宣告畫面已黑、HUD 已關（呼叫端需先 BlackIn + SetTopViewActive(false)）。
+        /// 第一段對話的 EnterAsync 因 state != Gameplay 而 no-op，直接從黑幕淡出，不閃場景。</summary>
+        public void BeginCovered()
+        {
+            state = State.Covered;
+        }
+
+        /// <summary>「進場景」：從黑幕揭露 HUD/場景並回到 Gameplay。供 EnterScenePerformance 經演出系統呼叫。
+        /// 非 Covered（場景已現/對話中）則 no-op。</summary>
+        public async UniTask RevealSceneAsync()
+        {
+            if (state != State.Covered)
+            {
+                return;
+            }
+
+            uiController.SetTopViewActive(true);
+            await uiController.BlackOut();
+            state = State.Gameplay;
+        }
+
         public async UniTask PlayAsync(int dialogueId)
         {
             await EnterAsync();

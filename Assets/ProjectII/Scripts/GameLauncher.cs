@@ -97,6 +97,11 @@ namespace ProjectII.Gameplay
             EnsureServicesBuilt();
 
             await uiController.ClearViewStack();
+
+            // 開場以黑幕為中性起點：HUD/場景在黑幕下備妥但不主動揭露，揭露時機改由事件表的演出
+            // （PrePerformance="Opening" → EnterScenePerformance）或對話復原驅動，讓對話可排在進場景之前。
+            await uiController.BlackIn();
+
             GameplayHudView hudView = await uiController.PushView<GameplayHudView>(GAMEPLAY_HUD_VIEW_PATH);
 
             hudPresenter?.Dispose();
@@ -106,6 +111,10 @@ namespace ProjectII.Gameplay
             services.GameState.ResetToInitial();
             services.TimeService.ResetToFirstPhase();
             hudPresenter.Refresh();
+
+            // 關掉場景並告知裝飾器已處於 Covered；第一段對話的 EnterAsync 因而 no-op，不再閃場景。
+            uiController.SetTopViewActive(false);
+            cinematicDialoguePlayer.BeginCovered();
 
             flowCts = new CancellationTokenSource();
             services.FlowController.RunNewGameAsync(flowCts.Token).Forget();
@@ -146,6 +155,10 @@ namespace ProjectII.Gameplay
         {
             CreditsView creditsView = InstantiateOverlayView<CreditsView>(CREDITS_VIEW_PATH);
             services.PerformancePlayer.Register("Credits", new CreditsPerformance(creditsView, services.TextProvider, creditsTextId));
+
+            // 「進場景」：把開場黑幕淡出、揭露場景。開場事件以 PrePerformance="Opening" 引用＝場景先行；
+            // 清空該欄則對話在黑幕中先演（prologue），結束後才揭露場景。
+            services.PerformancePlayer.Register("Opening", new EnterScenePerformance(cinematicDialoguePlayer));
         }
 
         private T InstantiateOverlayView<T>(string resourcePath) where T : AView
