@@ -11,6 +11,7 @@ using KahaGameCore.Package.GameFlowSystem.DefaultImplements;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.DataAccess;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Events;
+using ProjectII.Gameplay.Presentation;
 using ProjectII.Gameplay.Presentation.Presenters;
 using ProjectII.Gameplay.Presentation.Views;
 using UnityEngine;
@@ -44,6 +45,7 @@ namespace ProjectII.Gameplay
         private LocationMenuPresenter locationMenuPresenter;
         private HintPresenter hintPresenter;
         private GameplayHudPresenter hudPresenter;
+        private CinematicDialoguePlayer cinematicDialoguePlayer;
         private CancellationTokenSource flowCts;
         private bool isGameRunning;
 
@@ -121,8 +123,13 @@ namespace ProjectII.Gameplay
             hintPresenter = new HintPresenter(InstantiateOverlayView<HintPopupView>(HINT_POPUP_VIEW_PATH));
 
             // 全部採用 GameFlowSystem 的預設實作；有專案特殊需求時改用 Override 系列方法傳入。
+            // 對話以 CinematicDialoguePlayer 裝飾：觸發對話時自動黑幕 → 關 HUD → 對話 → 黑幕 → 開 HUD。
+            // 對話播放器（本專案自備的 DialoguePlayer，見 Presentation/DialoguePlayer.cs）由工廠在 builder 內
+            // 取得 ICommandExecutor 後建構，再包上 CinematicDialoguePlayer 演出裝飾器。
             services = new GameFlowSystemBuilder(staticDataManager)
-                .WithDialogueView(dialogueView)
+                .WithDialoguePlayerFactory(cmdExec =>
+                    cinematicDialoguePlayer = new CinematicDialoguePlayer(
+                        new DialoguePlayer(dialogueView, staticDataManager, cmdExec), uiController, dialogueView))
                 .WithActionMenuPresenter(actionMenuPresenter)
                 .WithHintPresenter(hintPresenter)
                 .WithLocationMenuPresenter(locationMenuPresenter)
@@ -165,6 +172,9 @@ namespace ProjectII.Gameplay
 
             hudPresenter?.Dispose();
             hudPresenter = null;
+
+            // 對話演出可能正卡在黑幕中途，強制歸位避免回到標題後卡黑屏。
+            cinematicDialoguePlayer?.ResetTransition();
 
             dialogueView.gameObject.SetActive(false);
             isGameRunning = false;
