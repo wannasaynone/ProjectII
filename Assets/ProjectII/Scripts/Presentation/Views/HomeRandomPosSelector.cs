@@ -1,3 +1,5 @@
+using KahaGameCore.GameEvent;
+using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Events;
 using UnityEngine;
 
 namespace ProjectII
@@ -7,6 +9,17 @@ namespace ProjectII
         [SerializeField] private GameObject[] posRoots;
 
         private void OnEnable()
+        {
+            EventBus.Subscribe<TimePhaseChangedEvent>(TimePhaseChangedEvent);
+            TimePhaseChangedEvent(null);
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<TimePhaseChangedEvent>(TimePhaseChangedEvent);
+        }
+
+        private void TimePhaseChangedEvent(TimePhaseChangedEvent timePhaseChangedEvent)
         {
             for (int i = 0; i < posRoots.Length; i++)
             {
