@@ -41,7 +41,7 @@ namespace ProjectII.Gameplay
 
         private GameStaticDataManager staticDataManager;
         private GameFlowServices services;
-        private ActionMenuPresenter actionMenuPresenter;
+        private GameplayPresentationCoordinator coordinator;
         private LocationMenuPresenter locationMenuPresenter;
         private HintPresenter hintPresenter;
         private GameplayHudPresenter hudPresenter;
@@ -105,7 +105,7 @@ namespace ProjectII.Gameplay
             GameplayHudView hudView = await uiController.PushView<GameplayHudView>(GAMEPLAY_HUD_VIEW_PATH);
 
             hudPresenter?.Dispose();
-            hudPresenter = new GameplayHudPresenter(hudView, staticDataManager, services.GameState, services.TimeService, services.LocationService);
+            hudPresenter = new GameplayHudPresenter(hudView, staticDataManager, services.GameState, services.TimeService, services.LocationService, cinematicDialoguePlayer);
 
             // 開新局：先重置狀態與時段，Refresh 才會讀到正確的初始地點/數值/時段。
             services.GameState.ResetToInitial();
@@ -127,7 +127,7 @@ namespace ProjectII.Gameplay
                 return;
             }
 
-            actionMenuPresenter = new ActionMenuPresenter(InstantiateOverlayView<ActionMenuView>(ACTION_MENU_VIEW_PATH));
+            coordinator = new GameplayPresentationCoordinator(InstantiateOverlayView<ActionMenuView>(ACTION_MENU_VIEW_PATH));
             locationMenuPresenter = new LocationMenuPresenter(InstantiateOverlayView<LocationMenuView>(LOCATION_MENU_VIEW_PATH));
             hintPresenter = new HintPresenter(InstantiateOverlayView<HintPopupView>(HINT_POPUP_VIEW_PATH));
 
@@ -139,10 +139,13 @@ namespace ProjectII.Gameplay
                 .WithDialoguePlayerFactory(cmdExec =>
                     cinematicDialoguePlayer = new CinematicDialoguePlayer(
                         new DialoguePlayer(dialogueView, staticDataManager, cmdExec), uiController, dialogueView))
-                .WithActionMenuPresenter(actionMenuPresenter)
+                .WithActionMenuPresenter(coordinator)
                 .WithHintPresenter(hintPresenter)
                 .WithLocationMenuPresenter(locationMenuPresenter)
                 .Build();
+
+            // 幕控在 Build 期間由對話工廠建立，Build 後才注入協調器供其揭露場景（SelectActionAsync 只在 Play 時呼叫，時序安全）。
+            coordinator.SetCinematic(cinematicDialoguePlayer);
 
             RegisterPerformances();
         }
@@ -179,7 +182,7 @@ namespace ProjectII.Gameplay
         {
             CancelFlow();
 
-            actionMenuPresenter.CancelPending();
+            coordinator.CancelPending();
             locationMenuPresenter.CancelPending();
             hintPresenter.CancelPending();
 

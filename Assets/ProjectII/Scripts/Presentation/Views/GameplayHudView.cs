@@ -36,16 +36,23 @@ namespace ProjectII.Gameplay.Presentation.Views
             dayPhaseText.text = text;
         }
 
-        /// <summary>切換 HUD 後方背景：淡出舊 prefab → 銷毀並實例化新 prefab → 淡入。</summary>
-        public void SetBackground(GameObject prefab)
+        /// <summary>切換 HUD 後方背景並回傳可等待的 task：淡出舊 prefab → 銷毀並實例化新 prefab → 淡入。
+        /// 換場現一律在黑幕下進行（見 CinematicDialoguePlayer），呼叫端可 await 以在揭露前確保換完。</summary>
+        public UniTask SwapBackgroundAsync(GameObject prefab)
         {
             backgroundCts?.Cancel();
             backgroundCts?.Dispose();
             backgroundCts = new CancellationTokenSource();
-            SwapBackgroundAsync(prefab, backgroundCts.Token).Forget();
+            return SwapBackgroundAsync(prefab, backgroundCts.Token);
         }
 
-        private async UniTaskVoid SwapBackgroundAsync(GameObject prefab, CancellationToken token)
+        /// <summary>射後不理版本：開場初始背景等不需等待的情境使用。</summary>
+        public void SetBackground(GameObject prefab)
+        {
+            SwapBackgroundAsync(prefab).Forget();
+        }
+
+        private async UniTask SwapBackgroundAsync(GameObject prefab, CancellationToken token)
         {
             if (currentBackgroundInstance != null)
             {

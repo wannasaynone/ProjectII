@@ -104,6 +104,7 @@ MonoBehaviour:
   - {x: -637.5, y: 150}
   - {x: -750, y: 187.5}
   - {x: -750, y: 750}
+  - {x: 700, y: 562.5}
   - {x: 750, y: 375}
   subActionMenuView: {fileID: 580493526219570964}
 --- !u!1 &4476620357660515232
@@ -844,11 +845,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1156263499709507775, guid: de1d98da231eff949b75c0a6f3c51c7f, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -742
+      value: 785
       objectReference: {fileID: 0}
     - target: {fileID: 1156263499709507775, guid: de1d98da231eff949b75c0a6f3c51c7f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 408
+      value: 41
       objectReference: {fileID: 0}
     - target: {fileID: 1156263499709507775, guid: de1d98da231eff949b75c0a6f3c51c7f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

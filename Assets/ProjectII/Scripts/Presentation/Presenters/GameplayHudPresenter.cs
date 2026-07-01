@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using KahaGameCore.GameData.Implemented;
 using KahaGameCore.GameEvent;
 using KahaGameCore.Package.GameFlowSystem.DefaultImplements.Data;
@@ -21,6 +22,7 @@ namespace ProjectII.Gameplay.Presentation.Presenters
         private readonly IGameState gameState;
         private readonly ITimeService timeService;
         private readonly ILocationService locationService;
+        private readonly CinematicDialoguePlayer curtain;
         private readonly List<GameValueData> hudValueDefinitions;
 
         public GameplayHudPresenter(
@@ -28,12 +30,14 @@ namespace ProjectII.Gameplay.Presentation.Presenters
             GameStaticDataManager staticDataManager,
             IGameState gameState,
             ITimeService timeService,
-            ILocationService locationService)
+            ILocationService locationService,
+            CinematicDialoguePlayer curtain)
         {
             this.view = view ? view : throw new ArgumentNullException(nameof(view));
             this.gameState = gameState ?? throw new ArgumentNullException(nameof(gameState));
             this.timeService = timeService ?? throw new ArgumentNullException(nameof(timeService));
             this.locationService = locationService ?? throw new ArgumentNullException(nameof(locationService));
+            this.curtain = curtain ?? throw new ArgumentNullException(nameof(curtain));
 
             GameValueData[] definitions = staticDataManager.GetAllGameData<GameValueData>();
             hudValueDefinitions = definitions == null
@@ -54,7 +58,13 @@ namespace ProjectII.Gameplay.Presentation.Presenters
                 .ToList());
 
             UpdateDayPhaseText();
-            ApplyBackground(locationService.CurrentLocation?.Background);
+
+            // 開場初始背景：此時畫面已在開場黑幕下（GameLauncher.BeginCovered），直接套用、不需協調揭露。
+            GameObject initialBackground = LoadBackground(locationService.CurrentLocation?.Background);
+            if (initialBackground != null)
+            {
+                view.SetBackground(initialBackground);
+            }
         }
 
         public void Dispose()
@@ -67,24 +77,45 @@ namespace ProjectII.Gameplay.Presentation.Presenters
 
         private void OnLocationChanged(LocationChangedEvent changedEvent)
         {
-            ApplyBackground(changedEvent.Location?.Background);
+            GameObject prefab = LoadBackground(changedEvent.Location?.Background);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            // 換場一律在黑幕下：先確保蓋幕、再換背景，並把整段登記給幕控，令後續任何揭露先等背景換完，
+            // 避免在亮著的畫面上看到背景切換。task 為熱啟動（UniTask），登記後由幕控於揭露時觀察其完成。
+            curtain.RegisterSceneChange(CoverThenSwapAsync(prefab));
         }
 
-        private void ApplyBackground(string resourcePath)
+        private async UniTask CoverThenSwapAsync(GameObject prefab)
+        {
+            // 被更新的換場取消（backgroundCts）時視為完成，避免孤兒 task 冒出未觀察的取消例外。
+            try
+            {
+                await curtain.EnsureCoveredAsync();
+                await view.SwapBackgroundAsync(prefab);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private GameObject LoadBackground(string resourcePath)
         {
             if (string.IsNullOrEmpty(resourcePath))
             {
-                return;
+                return null;
             }
 
             GameObject prefab = Resources.Load<GameObject>(resourcePath);
             if (prefab == null)
             {
                 Debug.LogError($"[GameplayHudPresenter] Failed to load background prefab: {resourcePath}");
-                return;
+                return null;
             }
 
-            view.SetBackground(prefab);
+            return prefab;
         }
 
         private void OnGameValueChanged(GameValueChangedEvent changedEvent)

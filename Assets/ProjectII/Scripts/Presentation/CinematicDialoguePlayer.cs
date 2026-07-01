@@ -32,6 +32,7 @@ namespace ProjectII.Gameplay.Presentation
         private State state = State.Gameplay;
         private CancellationTokenSource exitCts;
         private UniTask? activeRestore;
+        private UniTask? activeSceneChange;
 
         public CinematicDialoguePlayer(IDialoguePlayer inner, UserInterfaceController uiController, DialogueView dialogueView)
         {
@@ -47,10 +48,13 @@ namespace ProjectII.Gameplay.Presentation
             state = State.Covered;
         }
 
-        /// <summary>「進場景」：從黑幕揭露 HUD/場景並回到 Gameplay。供 EnterScenePerformance 經演出系統呼叫。
-        /// 非 Covered（場景已現/對話中）則 no-op。</summary>
+        /// <summary>「進場景」：從黑幕揭露 HUD/場景並回到 Gameplay。供 EnterScenePerformance／行動選單協調器呼叫。
+        /// 非 Covered（場景已現/對話中）則 no-op。揭露前先等待進行中的換場，避免蓋在換到一半的背景上。</summary>
         public async UniTask RevealSceneAsync()
         {
+            // 先等進行中的換場（含其蓋幕）完成，再判斷狀態：換場的 BlackIn 可能尚未把 state 設為 Covered，
+            // 若先判斷會誤判為非黑幕而早退，導致選單卡在黑幕後。
+            await WaitForSceneChangeAsync();
             if (state != State.Covered)
             {
                 return;
@@ -59,6 +63,48 @@ namespace ProjectII.Gameplay.Presentation
             uiController.SetTopViewActive(true);
             await uiController.BlackOut();
             state = State.Gameplay;
+        }
+
+        /// <summary>登記一段「換場」（例如背景換 prefab）：後續任何揭露都會先等它完成，確保換場只在黑幕下發生、
+        /// 內容不會蓋在換到一半的畫面上。由 GameplayHudPresenter 於 LocationChanged 時呼叫。</summary>
+        public void RegisterSceneChange(UniTask sceneChange)
+        {
+            activeSceneChange = sceneChange.Preserve();
+        }
+
+        /// <summary>等待任何進行中的退場（park）與換場收斂，讓 state 收斂到 Covered。供行動選單協調器在「顯示選單前」呼叫，
+        /// 避免延後且不檢查 state 的 park（RestoreAsync）於揭露前後蓋幕造成卡黑。無 pending 時即刻返回（例如純數值行動仍在 Gameplay）。</summary>
+        public async UniTask WaitForPendingTransitionsAsync()
+        {
+            if (activeRestore.HasValue)
+            {
+                try
+                {
+                    await activeRestore.Value;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                activeRestore = null;
+            }
+
+            await WaitForSceneChangeAsync();
+        }
+
+        /// <summary>等待並清除進行中的換場（若有）。換場被更新的換場取消時視為完成，不讓揭露連帶失敗。</summary>
+        private async UniTask WaitForSceneChangeAsync()
+        {
+            if (activeSceneChange.HasValue)
+            {
+                try
+                {
+                    await activeSceneChange.Value;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                activeSceneChange = null;
+            }
         }
 
         public async UniTask PlayAsync(int dialogueId)
@@ -74,6 +120,10 @@ namespace ProjectII.Gameplay.Presentation
         /// <summary>進入演出：確保已黑幕並關閉 HUD。已在演出中則僅取消待復原（不再黑幕第二次）。</summary>
         private async UniTask EnterAsync()
         {
+            // 先等進行中的換場（其蓋幕會把 state 設為 Covered），避免與換場的 BlackIn 撞在一起、
+            // 誤判為 Gameplay 而黑幕第二次、把換場的蓋幕取消掉（連帶略過背景替換）。
+            await WaitForSceneChangeAsync();
+
             // 取消待復原；若復原已越過防抖點而開始執行，等它跑完再進場（避免並行衝突）。
             exitCts?.Cancel();
             exitCts?.Dispose();
@@ -94,9 +144,11 @@ namespace ProjectII.Gameplay.Presentation
             state = State.Covered;
         }
 
-        /// <summary>淡出黑幕露出對話。僅在剛進場（Covered）時執行，連續對話時為 no-op，避免黑屏閃爍。</summary>
+        /// <summary>淡出黑幕露出對話。僅在剛進場（Covered）時執行，連續對話時為 no-op，避免黑屏閃爍。
+        /// 揭露前先等待進行中的換場，確保背景換完才露出。</summary>
         private async UniTask RevealAsync()
         {
+            await WaitForSceneChangeAsync();
             if (state != State.Covered)
             {
                 return;
@@ -104,6 +156,31 @@ namespace ProjectII.Gameplay.Presentation
 
             await uiController.BlackOut();
             state = State.Revealed;
+        }
+
+        /// <summary>確保畫面已被黑幕蓋住（供背景換場等「非對話」演出在蓋幕下進行）。
+        /// 與 <see cref="EnterAsync"/> 不同：不論目前在 Gameplay 或 Revealed（對話剛結束尚未 park）都會蓋幕，
+        /// 已 Covered 則 no-op。取消待復原後接手蓋幕，避免與 park 並行衝突。</summary>
+        public async UniTask EnsureCoveredAsync()
+        {
+            exitCts?.Cancel();
+            exitCts?.Dispose();
+            exitCts = null;
+            if (activeRestore.HasValue)
+            {
+                await activeRestore.Value;
+                activeRestore = null;
+            }
+
+            if (state == State.Covered)
+            {
+                return;
+            }
+
+            await uiController.BlackIn();
+            uiController.SetTopViewActive(false);
+            dialogueView.gameObject.SetActive(false);
+            state = State.Covered;
         }
 
         /// <summary>排程退場復原（延後且可取消）；若下一段對話在防抖視窗內進場則取消。</summary>
@@ -128,12 +205,12 @@ namespace ProjectII.Gameplay.Presentation
                 return;
             }
 
-            // 越過防抖點即視為真的要回到遊玩，整段復原跑完（不再中途取消，避免半黑殘留與並行衝突）。
+            // 越過防抖點即視為真的離開對話：蓋幕收對話框、把 HUD 備妥，然後「停在黑幕」不自動揭露。
+            // 揭露交給接著顯示內容的人（行動選單協調器的 RevealSceneAsync／下一段對話的 RevealAsync）。
             await uiController.BlackIn();
             dialogueView.gameObject.SetActive(false);
             uiController.SetTopViewActive(true);
-            await uiController.BlackOut();
-            state = State.Gameplay;
+            state = State.Covered;
             activeRestore = null;
         }
 
@@ -144,6 +221,7 @@ namespace ProjectII.Gameplay.Presentation
             exitCts?.Dispose();
             exitCts = null;
             activeRestore = null;
+            activeSceneChange = null;
             state = State.Gameplay;
             dialogueView.gameObject.SetActive(false);
             // BlackOut 回傳 Task（非 UniTask），以 discard 方式 fire-and-forget 清除黑幕。
