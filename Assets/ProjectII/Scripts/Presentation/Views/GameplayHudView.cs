@@ -52,6 +52,28 @@ namespace ProjectII.Gameplay.Presentation.Views
             SwapBackgroundAsync(prefab).Forget();
         }
 
+        /// <summary>清除目前背景並回傳可等待的 task：淡出後銷毀現有 prefab，不實例化新背景。
+        /// 移動到背景路徑為空的地點時使用；與換背景共用同一組 backgroundCts，彼此取消。</summary>
+        public UniTask ClearBackgroundAsync()
+        {
+            backgroundCts?.Cancel();
+            backgroundCts?.Dispose();
+            backgroundCts = new CancellationTokenSource();
+            return ClearBackgroundAsync(backgroundCts.Token);
+        }
+
+        private async UniTask ClearBackgroundAsync(CancellationToken token)
+        {
+            if (currentBackgroundInstance == null)
+            {
+                return;
+            }
+
+            await FadeBackgroundAsync(backgroundGroup.alpha, 0f, token);
+            Destroy(currentBackgroundInstance);
+            currentBackgroundInstance = null;
+        }
+
         private async UniTask SwapBackgroundAsync(GameObject prefab, CancellationToken token)
         {
             if (currentBackgroundInstance != null)

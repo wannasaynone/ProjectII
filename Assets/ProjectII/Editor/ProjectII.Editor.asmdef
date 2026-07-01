@@ -4,6 +4,10 @@
     "references": [
         "ProjectII.Gameplay",
         "KahaGameCore.Package.UserInterfaceSystem",
+        "KahaGameCore.Package.GameFlowSystem",
+        "KahaGameCore.Package.GameFlowSystem.DefaultImplements",
+        "KahaGameCore.Package.ValueContainer",
+        "KahaGameCore.GameData",
         "ProjectBSR.DialogueSystem",
         "Unity.TextMeshPro",
         "UnityEngine.UI",

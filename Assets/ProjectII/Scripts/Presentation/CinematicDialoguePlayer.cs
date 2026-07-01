@@ -76,6 +76,11 @@ namespace ProjectII.Gameplay.Presentation
         /// 避免延後且不檢查 state 的 park（RestoreAsync）於揭露前後蓋幕造成卡黑。無 pending 時即刻返回（例如純數值行動仍在 Gameplay）。</summary>
         public async UniTask WaitForPendingTransitionsAsync()
         {
+            // 先等換場收斂：換場內的 EnsureCoveredAsync 會接手待復原（park）並將 activeRestore 清空。
+            // 若反過來先在此 await activeRestore，會與換場同時 await 同一個 UniTask，
+            // 觸發「Already continuation registered」（Preserve 只允許完成後重複 await，不允許並行等待）。
+            await WaitForSceneChangeAsync();
+
             if (activeRestore.HasValue)
             {
                 try
@@ -87,8 +92,6 @@ namespace ProjectII.Gameplay.Presentation
                 }
                 activeRestore = null;
             }
-
-            await WaitForSceneChangeAsync();
         }
 
         /// <summary>等待並清除進行中的換場（若有）。換場被更新的換場取消時視為完成，不讓揭露連帶失敗。</summary>

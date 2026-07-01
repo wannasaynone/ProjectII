@@ -77,9 +77,18 @@ namespace ProjectII.Gameplay.Presentation.Presenters
 
         private void OnLocationChanged(LocationChangedEvent changedEvent)
         {
-            GameObject prefab = LoadBackground(changedEvent.Location?.Background);
+            string backgroundPath = changedEvent.Location?.Background;
+            if (string.IsNullOrEmpty(backgroundPath))
+            {
+                // 空背景路徑：在黑幕下清除目前背景（而非維持現況）。
+                curtain.RegisterSceneChange(CoverThenClearAsync());
+                return;
+            }
+
+            GameObject prefab = LoadBackground(backgroundPath);
             if (prefab == null)
             {
+                // 載入失敗：保留現況（LoadBackground 已記錯誤），避免誤清畫面。
                 return;
             }
 
@@ -95,6 +104,19 @@ namespace ProjectII.Gameplay.Presentation.Presenters
             {
                 await curtain.EnsureCoveredAsync();
                 await view.SwapBackgroundAsync(prefab);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private async UniTask CoverThenClearAsync()
+        {
+            // 與 CoverThenSwapAsync 同樣走黑幕協調：先蓋幕再清除，確保清除只在黑幕下發生。
+            try
+            {
+                await curtain.EnsureCoveredAsync();
+                await view.ClearBackgroundAsync();
             }
             catch (OperationCanceledException)
             {
